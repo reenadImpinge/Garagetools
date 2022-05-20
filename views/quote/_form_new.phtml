@@ -1,0 +1,1290 @@
+<?php
+
+use yii\helpers\Html;
+use yii\helpers\ArrayHelper;
+use yii\widgets\ActiveForm;
+use yii\helpers\Url;
+use yii\jui\DatePicker;
+use common\models\Quotes;
+use common\models\Customer;
+use common\models\Employee;
+use common\models\CompanyLocations;
+use common\models\CustomerSource;
+use yii\web\View;
+
+/* @var $this yii\web\View */
+/* @var $model common\models\User */
+/* @var $form yii\widgets\ActiveForm */
+$this->registerCss('
+table.none-border th {
+    border-bottom:none !important;
+}
+.invoice-icon{
+    margin-top: 10px;
+}
+.padding-right-none{
+    padding-right: 0px;
+}
+.padding-none{
+    padding: 0px;
+}
+.tabbable-custom {
+    margin-bottom: 0px;
+}
+.default-link{    
+    color: #337ab7;
+    text-decoration: none;
+}
+.btn-group-vertical>.btn.active, .btn-group-vertical>.btn:active, .btn-group-vertical>.btn:focus, .btn-group-vertical>.btn:hover, .btn-group>.btn.active, .btn-group>.btn:active, .btn-group>.btn:focus, .btn-group>.btn:hover {
+    z-index: 0;
+}
+.search {
+    position: relative;
+}
+.tt-menu {
+    z-index:99999!important;
+    top:100!important;
+    width:200px!important;
+}
+');
+?>
+
+<?php if (Yii::$app->session->hasFlash('error_msg')): ?>
+    <div class="alert alert-danger"><?= Yii::$app->session->getFlash('error_msg') ?></div>
+<?php endif; ?>
+<?php
+$form = ActiveForm::begin([
+    'enableClientValidation' => false,
+]);
+?>
+<div class="tabbable-custom ">
+    <ul class="nav nav-tabs ">
+        <li class="active">
+            <a id="link-customer" href="#tab_customer" data-toggle="tab" aria-expanded="true">Customer Detail</a>
+        </li>
+        <li class="">
+            <a id="link-vehicle" href="#tav_vehicle" data-toggle="tab" aria-expanded="false">Vehicle Detail</a>
+        </li>
+        <li class="">
+            <a id="link-quote" href="#tav_quote" data-toggle="tab" aria-expanded="false">Quote Detail</a>
+        </li>
+    </ul>
+</div>
+<div class="portlet light bordered" style="border-top-width: 0px !important;">
+    <div class="portlet-body form">
+        <div class="form-horizontal">
+            <div class="tab-content">
+                <!-- Tab 1 -->
+                <div class="tab-pane" id="tav_quote">
+                    <h3 class="form-section ">Quote Detail</h3>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <?=
+                            $form->field($model, 'location_id', [
+                                'template' => "{label}
+                                  <div class='col-md-7'>
+                                    {input}\n
+                                    <a href='javascript:void(0)' class='add_new_location_in_quote' style='font-size: 11px;font-size: 11px;text-decoration: underline;padding: 1px;padding-right: 10px;padding-left: 10px;'>
+                                    <i>Click to add new shop location</i>
+                                    </a>
+                                    \n{error}
+                                </div>",
+                                'labelOptions' => ['class' => 'control-label col-md-4 required-label']
+                            ])->dropdownList(ArrayHelper::map(CompanyLocations::getListLocation($company_id, $model->location_id), 'id', 'name'), ['prompt' => count(CompanyLocations::getListLocation($company_id, $model->location_id)) > 1 ? 'Select Shop Location' : null])
+                            ?>
+                            <?=
+                            $form->field($model, 'deposit', [
+                                'template' => "{label}<div class='col-md-4'>{input}\n{error}</div>",
+                                'labelOptions' => ['class' => 'control-label col-md-4']
+                            ])->dropdownList(Quotes::depositList(), ['disabled' => (!$canPayment && $model->deposit == Quotes::DEPOSIT_NO)])
+                            ?>
+                            <div class="hidden" id="row-deposit">
+                                <?=
+                                $form->field($model, 'deposit_amount', [
+                                    'template' => "{label}<div class='col-md-8'><div class='col-md-6' style='padding-left:0px'>{input}</div><div class='col-md-12' style='padding-left:0px'>{error}</div></div>",
+                                    'labelOptions' => ['class' => 'control-label col-md-4 required-label']
+                                ])->textInput(['type' => 'number', 'maxlength' => true, 'class' => 'form-control', 'step' => '0.01'])
+                                ?>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <!--
+                            <?php if ($model->isNewRecord): ?>
+                                <?=
+                                $form->field($model, 'estimate_number', [
+                                    'template' => "{label}<div class='col-md-5'>{input}\n{error}</div>",
+                                    'labelOptions' => ['class' => 'control-label col-md-4']
+                                ])->textInput(['maxlength' => true, 'placeholder' => 'Auto generate'])
+                                ?>  
+                            <?php else: ?>
+                                         
+                                       <div class="form-group">
+                                          <label class="control-label col-md-4" for="quotes-estimate_number">Quote Number</label>
+                                          <div class="col-md-4">
+                                              <p class="form-control-static">#<?= $model->estimate_number ?></p>
+                                          </div>
+                                      </div>
+                            <?php endif; ?>
+                            -->
+                            <?=
+                            $form->field($model, 'sales_id', [
+                                'template' => "{label}<div class='col-md-5'>{input}\n{error}</div>",
+                                'labelOptions' => ['class' => 'control-label col-md-4']
+                            ])->dropdownList(ArrayHelper::map(\common\models\Employee::getAllEmployee($owner_id), 'id', 'fullname'), ['prompt' => 'Select an Employee', 'class' => 'form-control'])
+                            ?>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <br/>
+                    </div>
+                    <div class="form-group">
+                        <div class="col-md-12">
+                            <div class="table-responsive">
+                                    <div class="col-md-12">
+                                        <table class="table table-striped table-bordered" style="margin-bottom:0px; text-align: center">
+                                            <thead>
+                                                <th class="text-center" style="width:15%">
+                                                    Wrap Type <span style="color:red">*</span>
+                                                    <br/>
+                                                    <a href='javascript:void(0)' class='add_new_wrap_type' style='font-size: 11px;font-size: 11px;text-decoration: underline;padding: 1px;padding-right: 10px;padding-left: 10px;'>
+                                                        <i>Click to add new wrap type</i>
+                                                    </a>
+                                                </th>
+                                                <th class="text-center" style="width:15%">
+                                                    Square Footage<span style="color:red">*</span>
+                                                </th>
+                                                <th class="text-center" style="width:15%">
+                                                    Material <span style="color:red">*</span>
+                                                    <br/>
+                                                    <a href='javascript:void(0)' class='add_new_material' style='font-size: 11px;font-size: 11px;text-decoration: underline;padding: 1px;padding-right: 10px;padding-left: 10px;'>
+                                                        <i>Click to add new Material</i>
+                                                    </a>
+                                                </th>
+                                                <th class="text-center" style="width:10%">
+                                                    Square Footage<span style="color:red">*</span>
+                                                </th>
+                                                <th class="text-center" style="width:10%">
+                                                    Cost Per Square foot<span style="color:red">*</span>
+                                                </th>
+                                                <th class="text-center" style="width:10%">
+                                                     Labor Cost<span style="color:red">*</span>
+                                                </th>
+                                                <th class="text-center" style="width:15%">
+                                                    Description
+                                                </th>
+                                                <th class="text-center" style="width:8%">
+                                                    Quantity <span style="color:red">*</span>
+                                                </th>
+                                                <th  class="text-center" style="width:10%">
+                                                    Subtotal
+                                                </th>
+                                                <th style="width:5%">
+                                                </th>
+                                            </thead>
+                                            <tbody id="invoice-main">
+                                                <?php $number = 0 ?>
+                                                <?php foreach ($model_items as $i => $model_item): ?>
+                                                    <tr class="quote-item">
+                                                        <td style="width:8%">
+                                                            <input type="hidden" name="QuoteItems[<?= $i ?>][id]" value="<?= $model_item->id ?>">
+                                                            <!--<input type="hidden" name="QuoteItems[<?= $i ?>][wrap_type_id]" class="item-wrap-type" value="<?= $model_item->wrap_type_id ?>">-->
+                                                            <?php
+                                                            echo $form->field($model_item, "[$i]wrap_type_id", [
+                                                                'template' => "{input}\n{error}",
+                                                                'labelOptions' => ['class' => 'control-label'],
+                                                                'options' => ['class' => '']
+                                                            ])->dropdownList(\common\models\WrapType::getFullData($owner_id), ['prompt' => 'Select', 'class' => 'form-control item-wrap-type']);
+                                                            
+                                                            ?>
+                                                            <input type="hidden" data-index="<?php echo $i; ?>" name="QuoteItemsWrapPrice[<?= $i ?>][id]" data-wraptype=""
+                                                            data-value="" />
+
+                                                            <?php
+
+
+//                                                                $model_item->wrap_type_id_temp = $model_item->wrap_special_name;
+//                                                                $model_item->material_id_temp  = $model_item->material_special_name;
+//
+//                                                                echo $form->field($model_item, "[$i]wrap_type_id_temp", [
+//                                                                    'template' => "<div class='search'>{input}\n{error}</div>",
+//                                                                    'labelOptions' => ['class' => 'control-label'],
+//                                                                    'options' => ['class' => '']
+//                                                                ])->textInput(['maxlength' => true, 'placeholder' => 'Type in wrap type', 'class' => 'form-control item-wrap-type-head', 'autocomplete' => 'off']);
+                                                            ?>
+                                                        </td>
+                                                        <td style="width:20%">
+                                                                <?=
+                                                                    $form->field($model_item, "[$i]square_footage_num", [
+                                                                        'template' => "{input}\n{error}",
+                                                                        'labelOptions' => ['class' => 'control-label'],
+                                                                        'options' => ['style' => 'width:38%;float:left;margin-right: 2%']
+                                                                    ])->textInput(['type' => 'number', 'maxlength' => true, 'placeholder' => '', 'class' => 'form-control square_footage_num', 'step' => '0.01', 'style' => 'width:100%'])
+                                                                ?>
+                                                                <?php
+                                                                    $footageType = $has_vehicle
+                                                                        ? ['1' => 'Fixed square footage', '2' => 'Percentage square footage']
+                                                                        : ['1' => 'Fixed square footage'];
+                                                   
+                                                                    echo $form->field($model_item, "[$i]square_footage_type", [
+                                                                        'template' => "{input}\n{error}",
+                                                                        'labelOptions' => ['class' => 'control-label'],
+                                                                        'options' => ['style' => 'width:60%;float: left']
+                                                                    ])->dropdownList($footageType, ['class' => 'form-control square_footage_type'])
+                                                                ?>
+                                                            <div class="clear"></div>
+                                                        </td>
+                                                        <td style="width:8%">
+                                                           <!--<input type="hidden" name="QuoteItems[<?= $i ?>][material_id]" class="item-material" value="<?= $model_item->material_id ?>">-->
+                                                           <?php
+                                                            echo $form->field($model_item, "[$i]material_id", [
+                                                                'template' => "{input}\n{error}",
+                                                                'labelOptions' => ['class' => 'control-label'],
+                                                                'options' => ['class' => '']
+                                                            ])->dropdownList(common\models\Material::getFullData($owner_id), ['prompt' => 'Select', 'class' => 'form-control item-material'])
+                                                            ?>
+                                                            <input type="hidden" name="length<?php echo $i; ?>" value="">
+                                                            <input type="hidden" name="lengthUnit<?php echo $i; ?>" value="">
+                                                            <input type="hidden" name="width<?php echo $i; ?>" value="">
+                                                            <input type="hidden" name="widthUnit<?php echo $i; ?>" value="">
+                                                            <?php
+//                                                                $form->field($model_item, "[$i]material_id_temp", [
+//                                                                    'template' => "{input}\n{error}",
+//                                                                    'labelOptions' => ['class' => 'control-label'],
+//                                                                    'options' => ['class' => '']
+//                                                                ])->textInput(['maxlength' => true, 'placeholder' => 'Type in a material', 'class' => 'form-control item-material-head', 'autocomplete' => 'off']);
+                                                            ?>
+                                                        </td>
+                                                        <td style="width:20%">
+                                                            <div class="" style="width:38%;float:left;margin-right: 2%">
+                                                                <input type="number" id="quoteitems-<?php echo $i; ?>-square_footage_num_m" class="form-control square_footage_num_m" name="QuoteItems[<?php echo $i; ?>][square_footage_num_m]" value="" placeholder="" step="0.01" style="width:100%">
+                                                                <div class="help-block"></div>
+                                                                </div>
+                                                                <div class="" style="width:60%;float: left">
+                                                                <select id="quoteitems-<?php echo $i; ?>-square_footage_type_m" class="form-control square_footage_type_m" name="QuoteItems[<?php echo $i; ?>][square_footage_type_m]">
+                                                                <option value="1" selected="">Fixed Price</option>
+                                                                <option value="2">Cost per square Foot</option>
+                                                                <option value="3">Cost per Roll</option>
+                                                                </select>
+                                                                <div class="help-block"></div>
+                                                                </div>
+                                                            <div class="clear"></div>
+                                                        </td>
+                                                        <td>
+                                                            <?=
+                                                                $form->field($model_item, "[$i]price", [
+                                                                    'template' => "{input}\n{error}",
+                                                                    'labelOptions' => ['class' => 'control-label'],
+                                                                    'options' => ['class' => '']
+                                                                ])->textInput(['type' => 'number', 'maxlength' => true, 'placeholder' => 'Cost Per Square foot', 'class' => 'form-control item_price', 'step' => '0.01'])
+                                                            ?>
+                                                        </td>
+                                                        <td>
+                                                             <?=
+                                                            $form->field($model_item, "[$i]labor_cost", [
+                                                                'template' => "{input}\n{error}",
+                                                                'labelOptions' => ['class' => 'control-label'],
+                                                                'options' => ['class' => '']
+                                                            ])->textInput(['type' => 'number', 'maxlength' => true, 'placeholder' => 'Cost Per Square foot', 'class' => 'form-control item-labor-cost', 'step' => '0.01'])
+                                                            ?>
+                                                        </td>
+                                                        <td>
+                                                            <?=
+                                                            $form->field($model_item, "[$i]description", [
+                                                                'template' => "{input}\n{error}",
+                                                                'labelOptions' => ['class' => 'control-label'],
+                                                                'options' => ['class' => '']
+                                                            ])->textarea(['placeholder' => 'Description', 'class' => 'form-control item-description', 'rows' => 2])
+                                                            ?>   
+                                                        </td>
+                                                        <td>
+                                                            <?=
+                                                            $form->field($model_item, "[$i]quantity", [
+                                                                'template' => "{input}\n{error}",
+                                                                'labelOptions' => ['class' => 'control-label'],
+                                                                'options' => ['class' => '']
+                                                            ])->textInput(['type' => 'number', 'min' => 0, 'placeholder' => 'Quantity', 'class' => 'form-control item_quantity'])
+                                                            ?>
+                                                            <?=
+                                                            $form->field($model_item, "[$i]tax_id", [
+                                                                'template' => "{input}\n{error}",
+                                                                'labelOptions' => ['class' => 'control-label'],
+                                                                'options' => ['class' => 'hide']
+                                                            ])->dropDownList(\common\models\Taxs::getAllTax($owner_id), ['prompt' => 'Tax', 'class' => 'form-control item_tax_id'])->label('')
+                                                            ?>
+                                                            <p class="tax_rate_show_value hide"></p>
+                                                            <?=
+                                                            $form->field($model_item, "[$i]tax_rate", [
+                                                                'template' => "{input}\n{error}",
+                                                                'labelOptions' => ['class' => 'control-label'],
+                                                                'options' => ['class' => '']
+                                                            ])->hiddenInput(['class' => 'form-control item_tax_rate'])
+                                                            ?>   
+                                                            <?=
+                                                            $form->field($model_item, "[$i]tax_name", [
+                                                                'template' => "{input}\n{error}",
+                                                                'labelOptions' => ['class' => 'control-label'],
+                                                                'options' => ['class' => '']
+                                                            ])->hiddenInput(['class' => 'form-control item_tax_name'])
+                                                            ?>   
+
+                                                            <?=
+                                                            $form->field($model_item, "[$i]tax_total", [
+                                                                'template' => "{input}\n{error}",
+                                                                'labelOptions' => ['class' => 'control-label'],
+                                                                'options' => ['class' => '']
+                                                            ])->hiddenInput(['class' => 'form-control item_tax_total'])
+                                                            ?>   
+                                                            <?=
+                                                            $form->field($model_item, "[$i]sub_total", [
+                                                                'template' => "{input}\n{error}",
+                                                                'labelOptions' => ['class' => 'control-label'],
+                                                                'options' => ['class' => '']
+                                                            ])->hiddenInput(['class' => 'form-control item_sub_total'])
+                                                            ?>
+                                                        </td>
+                                                        <td style="text-align: right;">
+                                                            <?php
+                                                               $footage = $model_item->square_total
+                                                            ?>
+                                                            <?php if ($model->isNew):?>
+                                                                <p class="form-control-static item_total"><?= common\models\UserSettings::getCurrency() . '' . number_format(($model_item->quantity * $model_item->price * $footage) + $model_item->labor_cost, 2) ?></p>
+                                                            <?php else:?>
+                                                                <p class="form-control-static item_total"><?= common\models\UserSettings::getCurrency() . '' . number_format(($model_item->quantity * $model_item->price * $footage) + $model_item->labor_cost, 2) ?></p>
+                                                            <?php endif;?>
+                                                        </td>
+                                                        <td>
+                                                            <div class="invoice-icon">
+                                                                <i class="glyphicon glyphicon-minus"></i>
+                                                            </div>
+                                                        </td>
+                                                    </tr>
+                                                    <?php $number = $i ?>
+                                                <?php endforeach; ?>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                    <div class="col-md-12">
+                                        <table class="table total-price none-border" style="margin-bottom:0px">
+                                            <thead>
+                                            <th class="col-md-1">
+                                                <i class="glyphicon glyphicon-plus" data-number="<?= $number + 1 ?>"></i>
+                                            </th>
+                                            <th class="col-md-6">
+                                            </th>
+                                            <th  class="col-md-2 text-right">
+                                                Subtotal
+                                            </th>
+                                            <th  class="col-md-3 text-left">
+                                                <label class="control-label" id="total-amount"><?php echo common\models\UserSettings::getCurrency(); ?>0.00</label>
+                                            </th>
+                                            </thead>
+                                        </table>
+                                        <table class="table total-price none-border" style="margin-bottom:0px">
+                                            <thead>
+                                            <th class="col-md-1">
+                                            </th>
+                                            <th class="col-md-6">
+                                            </th>
+                                            <th  class="col-md-2 text-right">
+                                                <div style="padding: 10px;">Discount</div>
+                                            </th>
+                                            <th  class="col-md-3 text-left">
+                                                <div class="row">
+                                                    <div class="col-md-7">
+                                                        <?=
+                                                        $form->field($model, 'discount_type', [
+                                                            'template' => "<div class='col-md-12'>{input}</div>",
+                                                        ])->dropdownList(['1' => 'Percentage', '2' => 'Numeric'], ['class' => 'form-control'])->label(false);
+                                                        ?>   
+                                                    </div>
+                                                    <div class="col-md-5">
+                                                        <?=
+                                                        $form->field($model, 'discount', [
+                                                            'template' => "<div class='col-md-12'>{input}\n{error}</div>",
+                                                        ])->textInput(['maxlength' => true, 'type' => 'number', 'step' => '0.01'])->label(false);
+                                                        ?>   
+                                                    </div>
+                                                </div>
+                                            </th>
+                                            </thead>
+                                        </table>
+                                        <table class="table total-price none-border" style="margin-bottom:0px">
+                                            <thead>
+                                            <th class="col-md-1">
+
+                                            </th>
+                                            <th class="col-md-6">
+                                            </th>
+                                            <th  class="col-md-2 text-right">
+                                                Total After Discount
+                                            </th>
+                                            <th  class="col-md-3 text-left">
+                                                <label class="control-label" id="total_after_discount"><?php echo common\models\UserSettings::getCurrency(); ?>0.00</label>
+                                            </th>
+                                            </thead>
+                                        </table>
+                                        <table class="table total-price none-border" style="margin-bottom:0px">
+                                            <thead>
+                                            <th class="col-md-1">
+
+                                            </th>
+                                            <th class="col-md-6">
+                                            </th>
+                                            <th  class="col-md-2 text-right">
+                                                Tax
+                                            </th>
+                                            <th  class="col-md-3 text-left">
+                                                <label class="control-label" id="customer_tax">
+                                                    <?php echo $model->tax_rate . '%'; ?>
+                                                </label>
+                                            </th>
+                                            </thead>
+                                        </table>
+                                        <table class="table total-price none-border" style="margin-bottom:0px">
+                                            <thead>
+                                            <th class="col-md-1">
+                                            </th>
+                                            <th class="col-md-6">
+                                            </th>
+                                            <th  class="col-md-2 text-right">
+                                                Estimate Total
+                                            </th>
+                                            <th  class="col-md-3 text-left">
+                                                <label class="control-label" id="total_after_tax"><?php echo common\models\UserSettings::getCurrency(); ?>0.00</label>
+                                            </th>
+                                            </thead>
+                                        </table>
+                                        <?=
+                                        $form->field($model, "total_after_discount", [
+                                            'template' => "{input}",
+                                            'labelOptions' => ['class' => 'control-label'],
+                                            'options' => ['class' => '']
+                                        ])->hiddenInput(['class' => 'form-control'])
+                                        ?>
+                                        <?=
+                                        $form->field($model, "total_after_tax", [
+                                            'template' => "{input}",
+                                            'labelOptions' => ['class' => 'control-label'],
+                                            'options' => ['class' => '']
+                                        ])->hiddenInput(['class' => 'form-control'])
+                                        ?>
+                                        <?=
+                                        $form->field($model, "tax_rate", [
+                                            'template' => "{input}",
+                                            'labelOptions' => ['class' => 'control-label'],
+                                            'options' => ['class' => '']
+                                        ])->hiddenInput(['class' => 'form-control'])
+                                        ?>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <?=
+                                        $form->field($model, 'terms', [
+                                            'template' => "{label}\n<div class='col-md-7'>{input}</div>\n{error}",
+                                            'labelOptions' => ['class' => 'control-label col-md-4']
+                                        ])->textarea(['rows' => 6])
+                                        ?>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <?=
+                                        $form->field($model, 'note', [
+                                            'template' => "{label}\n<div class='col-md-7'>{input}</div>\n{error}",
+                                            'labelOptions' => ['class' => 'control-label col-md-4']
+                                        ])->textarea(['rows' => 6])
+                                        ?>
+                                    </div>
+                                </div>
+                        </div>
+                    </div>
+                    <div class="form-actions">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="row">
+                                    <div class="col-md-offset-4 col-md-12">
+                                        <a id="btn-back" href="" data-toggle="tab" class="btn btn-default btn-back" step="3" aria-expanded="false">Back</a>
+                                        <a id="btn-submit-quote" href="javascript:void(0)" step="3" data-toggle="tab" class="btn btn-success" aria-expanded="false"><?php echo $model->isNewRecord ? Yii::t('app', 'Create') : Yii::t('app', 'Create') ?></a>
+                                        <?= Html::submitButton($model->isNewRecord ? Yii::t('app', 'Create') : Yii::t('app', 'Update'), ['class' => 'btn btn-success hide btn-create-quote']) ?>
+                                        &nbsp;
+                                        <?php if (!$model->isNewRecord): ?> 
+                                            <a id="btn-view" href="/quotes/default/view?id=<?= $model->id ?>" class="btn btn-primary">View</a>
+                                        <?php endif; ?>
+                                        <a id="btn-cancel" href="/quotes" class="btn btn-default">Cancel</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>  
+                </div>
+                <!-- Tab 2 -->
+                <div class="tab-pane active" id="tab_customer">
+                    <h3 class="form-section">Customer Details</h3>
+                    <div class="row">
+                        <div class="col-md-10 col-md-offset-2">
+                            <div class="md-radio-inline">
+                                <div class="md-radio">
+                                    <input type="radio" id="radio53" name="method" class="md-radiobtn" value="new" <?= $is_new_customer ? 'checked' : '' ?> >
+                                    <label for="radio53">
+                                        <span class="inc"></span>
+                                        <span class="check"></span>
+                                        <span class="box"></span>
+                                        New Customer </label>
+                                </div>
+                                <div class="md-radio">
+                                    <input type="radio" id="radio54" name="method" class="md-radiobtn" value="exists" <?= $is_new_customer ? '' : 'checked' ?>>
+                                    <label for="radio54">
+                                        <span></span>
+                                        <span class="check"></span>
+                                        <span class="box"></span>
+                                        Choose existing Customer </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="choose-customer">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <input type="hidden" id="owner_id" value="<?php echo $owner_id; ?>">
+                                <?= $form->field($model, 'customer_id')->hiddenInput()->label(false); ?>
+                                <?php if ($model->isNewRecord): ?>
+                                    <?=
+                                    $form->field($model, 'customer_company', [
+                                        'template' => "{label}<div class='col-md-8 search'><span class='fa fa-search'></span>{input}\n{error}</div>",
+                                        'labelOptions' => ['class' => 'control-label col-md-4 required-label']
+                                    ])->textInput(['maxlength' => true, 'placeholder' => 'Type in a Customer or Company', 'class' => 'form-control customer-typeahead', 'autocomplete' => 'off']);
+                                    ?>
+                                <?php else: ?>
+                                    <?=
+                                    $form->field($model, 'customer_company', [
+                                        'template' => "{label}<div class='col-md-8 search'><span class='fa fa-search'></span>{input}\n{error}</div>",
+                                        'labelOptions' => ['class' => 'control-label col-md-4 required-label']
+                                    ])->textInput(['maxlength' => true, 'placeholder' => 'Type in a Customer or Company', 'class' => 'form-control customer-typeahead', 'autocomplete' => 'off']);
+                                    ?>
+                                <?php endif; ?>
+                                <?=
+                                $form->field($model, 'step_1', [
+                                    'template' => "{label}<div class='col-md-8'>{input}\n{error}</div>",
+                                    'labelOptions' => ['class' => 'control-label col-md-4 required-label']
+                                ])->textInput(['maxlength' => true, 'class' => 'hide'])->label(false);
+                                ?>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="control-label col-md-4">First Name</label>
+                                    <div class="col-md-8"><p class="form-control-static" id="text-first_name"><?= !empty($model_customer->first_name) ? $model_customer->first_name : $model_customer->name ?></p></div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="control-label col-md-4">Email</label>
+                                    <div class="col-md-8"><p class="form-control-static" id="text-email"><?php $model_customer->email ?></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="control-label col-md-4">Last Name</label>
+                                    <div class="col-md-8"><p class="form-control-static" id="text-last_name"><?php $model_customer->last_name ?></p></div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="control-label col-md-4">Phone</label>
+                                    <div class="col-md-8"><p class="form-control-static" id="text-phone"><?php $model_customer->phone ?></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="clearfix row">
+                            <div class="col-md-12">
+                                <div class="form-group">
+                                    <label class="control-label col-md-2">Company</label>
+                                    <div class="col-md-9"><p class="form-control-static" id="text-company"><?php $model_customer->company ?></div>
+                                </div>
+                            </div>
+                            <div class="col-md-12">
+                                <div class="form-group">
+                                    <label class="control-label col-md-2">Tax Resale No</label>
+                                    <div class="col-md-9"><p class="form-control-static" id="text-tax_resale_no"><?php $model_customer->company ?></div>
+                                </div>
+                            </div>
+                            <div class="col-md-12">
+                                <div class="form-group">
+                                    <label class="control-label col-md-2">Customer is not taxable</label>
+                                    <div class="col-md-9"><p class="form-control-static" id="text-taxable"><?php $model_customer->company ?></div>
+                                </div>
+                            </div>
+                            <div class="col-md-12">
+                                <div class="form-group">
+                                    <label class="control-label col-md-2">Notes</label>
+                                    <div class="col-md-9"><p class="form-control-static" id="text-details"><?php $model_customer->details ?></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="clearfix row">
+                            <div class="col-md-12">
+                                <div class="form-group">
+                                    <label class="control-label col-md-2">Address</label>
+                                    <div class="col-md-9"><p class="form-control-static" id="text-address"><?php $model_customer->address ?></div>
+                                </div>
+                                <div class="form-group">
+                                    <label class="control-label col-md-2">Zipcode</label>
+                                    <div class="col-md-9"><p class="form-control-static" id="text-zipcode"><?php $model_customer->zipcode ?></div>
+                                </div>
+                                <div class="form-group">
+                                    <label class="control-label col-md-2">Country</label>
+                                    <div class="col-md-9"><p class="form-control-static" id="text-country"><?php $model_customer->country ?></div>
+                                </div>
+                                <div class="form-group">
+                                    <label class="control-label col-md-2">How did customer find you?</label>
+                                    <div class="col-md-9"><p class="form-control-static" id="text-source"><?php $model_customer->getSourceInfo() ?></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="new-customer">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <?php
+                                if (Yii::$app->user->identity->role == \common\models\User::ROLE_ADMIN) {
+                                    echo $form->field($model_customer, 'user_id', [
+                                        'template' => "{label}\n<div class='col-md-8'>{input}{error}</div>",
+                                        'labelOptions' => ['class' => 'control-label col-md-4']
+                                    ])->dropDownList(ArrayHelper::map($companies, 'owner_id', 'name'), ['prompt' => 'Select Company']);
+                                }
+                                ?>
+                                <?php
+                                if (empty($model_customer->first_name)) {
+                                    $model_customer->first_name = $model_customer->name;
+                                }
+                                ?>
+                                <?=
+                                $form->field($model_customer, 'first_name', [
+                                    'template' => "{label}<div class='col-md-8'>{input}\n{error}</div>",
+                                    'labelOptions' => ['class' => 'control-label col-md-4 required-label']
+                                ])->textInput(['maxlength' => true])
+                                ?>
+                                <?=
+                                $form->field($model_customer, 'last_name', [
+                                    'template' => "{label}<div class='col-md-8'>{input}\n{error}</div>",
+                                    'labelOptions' => ['class' => 'control-label col-md-4 required-label']
+                                ])->textInput(['maxlength' => true])
+                                ?>
+                                <?=
+                                $form->field($model_customer, 'company', [
+                                    'template' => "{label}<div class='col-md-8'>{input}\n{error}</div>",
+                                    'labelOptions' => ['class' => 'control-label col-md-4']
+                                ])->textInput(['maxlength' => true])
+                                ?>
+                                <?=
+                                $form->field($model_customer, 'tax_resale_no', [
+                                    'template' => "{label}<div class='col-md-4'>{input}\n{error}</div>",
+                                    'labelOptions' => ['class' => 'control-label col-md-4']
+                                ])->textInput(['maxlength' => true, 'type' => 'number', 'step' => '0.01'])
+                                ?>
+                                <div class="col-md-4"></div>
+                                <div class="col-md-6">
+                                    <div style=" margin-left: 6px;">
+                                        <?php
+                                        echo $form->field($model_customer, 'taxable')->checkBox(['label' => 'This customer is not taxable', 'uncheck' => null, 'checked' => true]);
+                                        ?>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <?=
+                                $form->field($model_customer, 'email', [
+                                    'template' => "{label}<div class='col-md-6'>{input}\n{error}</div>",
+                                    'labelOptions' => ['class' => 'control-label col-md-4 required-label']
+                                ])->textInput(['maxlength' => true])
+                                ?>     
+                                <?=
+                                $form->field($model_customer, 'phone', [
+                                    'template' => "{label}<div class='col-md-4'>{input}\n{error}</div>",
+                                    'labelOptions' => ['class' => 'control-label col-md-4']
+                                ])->textInput(['maxlength' => true])
+                                ?>
+                            </div>
+                        </div>
+                        <div class="clearfix row">
+                            <div class="col-md-12">
+                                <?=
+                                $form->field($model_customer, 'details', [
+                                    'template' => "{label}\n<div class='col-md-9'>{input}\n{hint}</div>\n{error}",
+                                    'labelOptions' => ['class' => 'control-label col-md-2']
+                                ])->textarea(['rows' => 4])->hint('Internal note about customer (Only your company will see this) i.e. Customer likes car spotless')
+                                ?>
+                                <?=
+                                $form->field($model_customer, 'address', [
+                                    'template' => "{label}<div class='col-md-6'>{input}\n{error}</div>",
+                                    'labelOptions' => ['class' => 'control-label col-md-2']
+                                ])->textInput(['maxlength' => false, 'placeholder' => 'Address'])
+                                ?>
+                                <?=
+                                $form->field($model_customer, 'city', [
+                                    'template' => "{label}<div class='col-md-2'>{input}\n{error}</div>",
+                                    'labelOptions' => ['class' => 'control-label col-md-2']
+                                ])->textInput(['maxlength' => true])
+                                ?>
+                                <?php
+                                echo $form->field($model_customer, 'state', [
+                                            'template' => "{label}<div class='col-md-4'>{input}\n{error}</div>",
+                                            'labelOptions' => ['class' => 'control-label col-md-2']
+                                        ])->dropDownList([], ['prompt' => 'Select a state', 'class' => 'form-control state', 'state' => $model_customer->state])
+                                        ->label('State/Province');
+                                ?>
+                                <?=
+                                $form->field($model_customer, 'zipcode', [
+                                    'template' => "{label}<div class='col-md-2'>{input}\n{error}</div>",
+                                    'labelOptions' => ['class' => 'control-label col-md-2']
+                                ])->textInput(['maxlength' => true])
+                                ?>
+                                <?php
+                                echo $form->field($model_customer, 'country', [
+                                            'template' => "{label}<div class='col-md-4'>{input}\n{error}</div>",
+                                            'labelOptions' => ['class' => 'control-label col-md-2']
+                                        ])->dropDownList([], ['prompt' => 'Select a Country', 'class' => 'form-control country'])
+                                        ->label('Country');
+                                ?>
+                                <?=
+                                $form->field($model_customer, 'source_id', [
+                                    'template' => "{label}<div class='col-md-2'>{input}\n{hint}\n{error}</div>",
+                                    'labelOptions' => ['class' => 'control-label col-md-2']
+                                ])->dropDownList(CustomerSource::getListSource($owner_id), ['prompt' => 'Choose option'])->label('How did customer find you?')->hint('This list can be edited <a href="/settings/customer-source">here</a>');
+                                ?>
+                                <div id="source-other" class="source-other <?= $model_customer->source_id == CustomerSource::OTHER ? '' : 'hidden' ?> ">
+                                    <?=
+                                    $form->field($model_customer, 'source_other', [
+                                        'template' => "<div class='col-md-6 col-md-offset-2'>{input}\n{error}</div>",
+                                        'labelOptions' => ['class' => 'control-label col-md-2']
+                                    ])->textInput()
+                                    ?>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-actions">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="row">
+                                    <div class="col-md-offset-4 col-md-8">
+                                        <a id="btn-continue-01" href="" data-toggle="tab" class="btn btn-success btn-continue" aria-expanded="false" step="1">Continue</a>
+                                        <?php if (!$model->isNewRecord): ?> 
+                                            <a id="btn-view" href="/quotes/default/view?id=<?= $model->id ?>" class="btn btn-primary">View</a>
+                                        <?php endif; ?>
+                                        <a id="btn-cancel" href="/quotes" class="btn btn-default">Cancel</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>  
+                </div>
+                <!-- Tab 3 -->
+                <div class="tab-pane" id="tav_vehicle">
+                    <h3 class="form-section ">Vehicle Detail</h3>
+                    <div class="row" style=" margin-bottom:20px;">
+                        <div class="col-md-10 col-md-offset-2">
+                            <input type="text" name="has_vehicle" class="hide has_vehicle" value="<?php echo isset($has_vehicle) ? $has_vehicle : 1; ?>">
+                            <div class="md-radio-inline">
+                                <div class="md-radio">
+                                    <input type="radio" id="radio55" name="vehicle_type" class="md-radiobtn vehicle_type <?php echo isset($has_vehicle) && $has_vehicle == 0 ? "hasChecked" : ""; ?>" value="0" <?php echo isset($has_vehicle) && $has_vehicle == 0 ? "checked" : ""; ?>>
+                                    <label for="radio55">
+                                        <span class="inc"></span>
+                                        <span class="check"></span>
+                                        <span class="box"></span>
+                                        <strong>Skip this step for now</strong></label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row cars <?php echo isset($has_vehicle) && $has_vehicle > 0 ? "" : "hide"; ?>">
+                        <div class="col-md-6 vehicle_manually <?php echo isset($has_vehicle) && $has_vehicle == 1 ? "" : "hide"; ?>"">
+                            <?=
+                            $form->field($model_cars, 'manufacturer_year', [
+                                'template' => "{label}\n<div class='col-md-4'>{input}\n{error}</div><div class='col-md-4'></div>",
+                                'labelOptions' => ['class' => 'control-label col-md-4 required-label']
+                            ])->dropDownList($model_cars->listManufactureYear(), ['prompt' => 'Select']);
+                            ?>
+                            <?=
+                            $form->field($model_cars, 'brand', [
+                                'template' => "{label}\n<div class='col-md-5'>{input}\n{error}</div>",
+                                'labelOptions' => ['class' => 'control-label col-md-4 required-label']
+                            ])->dropDownList($model_cars->getMakeCars(), ['prompt' => 'Select ']);
+                            ?>
+                            <?=
+                            $form->field($model_cars, 'model', [
+                                'template' => "{label}\n<div class='col-md-5'><img src='" . Yii::$app->urlManager->hostInfo . '/public/tpl/img/input-spinner.gif' . "' class='image-loading-model hide' />{input}\n{error}</div>",
+                                'labelOptions' => ['class' => 'control-label col-md-4 required-label']
+                            ])->dropDownList($model_cars->getModelCars(), ['prompt' => 'Select ']);
+                            ?>
+                            <?=
+                            $form->field($model_cars, 'model_temp', [
+                                'template' => "{label}{input}\n{error}",
+                            ])->hiddenInput(['maxlength' => true])->label(false);
+                            ?>
+                            <?=
+                            $form->field($model_cars, 'square_footage', [
+                                'template' => "{label}{input}\n{error}",
+                            ])->hiddenInput(['maxlength' => true])->label(false);
+                            ?>
+                            <?php 
+                                $lwh = "";
+                                if (!empty($model_cars->length) && !empty($model_cars->width) && !empty($model_cars->height)) {
+                                    $lwh = $model_cars->length .' L x ' .  $model_cars->width .' W x '.  $model_cars->height .' H';
+                                }
+                            ?>
+                            <div class="form-group dimension <?php echo empty($lwh) ? 'hide' : '' ?>">
+                            <label style="text-align: right" class="col-md-4" for="car-model">Dimension</label>
+                            <div class="col-md-5">
+                                <p class="lwh"><?php echo $lwh; ?><p>
+                            </div>
+                            </div>
+                            <div class="form-group square-footage <?php echo empty($model_cars->square_footage) ? 'hide' : '' ?>">
+                            <label style="text-align: right" class="col-md-4" for="car-model">Square footage</label>
+                            <div class="col-md-5">
+                                <p class="sf"><?php echo $model_cars->square_footage; ?><p>
+                            </div>
+                            </div>
+                            <?=
+                            $form->field($model_cars, 'description', [
+                                'template' => "{label}\n<div class='col-md-7'>{input}</div>\n{error}",
+                                'labelOptions' => ['class' => 'control-label col-md-4']
+                            ])->textarea(['rows' => 6])
+                            ?>
+                            <?=
+                            $form->field($model_cars, 'length', [
+                                'template' => "{label}\n<div class='col-md-7'>{input}</div>\n{error}",
+                                'labelOptions' => ['class' => 'control-label col-md-4']
+                            ])->hiddenInput(['maxlength' => true])->label(false);
+                            ?>
+                            <?=
+                            $form->field($model_cars, 'width', [
+                                'template' => "{label}\n<div class='col-md-7'>{input}</div>\n{error}",
+                                'labelOptions' => ['class' => 'control-label col-md-4']
+                            ])->hiddenInput(['maxlength' => true])->label(false);
+                            ?>
+                            <?=
+                            $form->field($model_cars, 'height', [
+                                'template' => "{label}\n<div class='col-md-7'>{input}</div>\n{error}",
+                                'labelOptions' => ['class' => 'control-label col-md-4']
+                            ])->hiddenInput(['maxlength' => true])->label(false);
+                            ?>
+                        </div>
+                        <div class="col-md-6 not_vehicle <?php echo isset($has_vehicle) && $has_vehicle == 2 ? "" : "hide"; ?>">
+                            <?=
+                            $form->field($model_cars, 'other', [
+                                'template' => "{label}\n<div class='col-md-7'>{input}\n{error}</div>",
+                                'labelOptions' => ['class' => 'control-label col-md-4 required-label']
+                            ])->textarea(['rows' => 6, 'placeholder' => "What will this job be working on"])->label('What will this job be working on')
+                            ?>
+                        </div>
+                        <?php
+                        $text = "My Vehicle is Not Listed / This isn't for a Vehicle";
+                        $style = "left:-100px;";
+                        if ($has_vehicle == 2) {
+                            $text = "Select Vehicle";
+                            $style = "left:0px;";
+                        }
+                        ?>
+                        <div class="col-md-4" style="margin-bottom: 20px; <?php echo $style; ?>">
+                            <a href="javascript:void(0)" class="vehicle <?php echo $has_vehicle == 2 ? "hasVehicle" : "" ?>" style="text-decoration: underline; color:blue"><strong><?php echo $text; ?></strong></a>
+                        </div>
+                    </div>
+                    <div class="form-actions">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="row">
+                                    <div class="col-md-offset-4 col-md-8">
+                                        <a id="btn-back-02" href="" data-toggle="tab" class="btn btn-default btn-back" aria-expanded="false" step="2">Back</a>
+                                        <a id="btn-submit-quote-02" href="javascript:void(0)" data-toggle="tab" class="btn btn-success btn-continue" aria-expanded="false" step="2"><?php echo $model->isNewRecord ? Yii::t('app', 'Continue') : Yii::t('app', 'Update') ?></a>
+                                        <?php if (!$model->isNewRecord): ?> 
+                                            <a id="btn-view" href="/quotes/default/view?id=<?= $model->id ?>" class="btn btn-primary">View</a>
+                                        <?php endif; ?>
+                                        <a id="btn-cancel" href="/quotes" class="btn btn-default">Cancel</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<?php ActiveForm::end(); ?>
+<style>
+    .pac-container:after {
+        /* Disclaimer: not needed to show 'powered by Google' if also a Google Map is shown */
+        background-image: none !important;
+        height: 0px;
+    }
+</style>
+<div  class="modal fade form_add_new_location" tabindex="-1" role="dialog" data-backdrop="static" data-keyboard="false" >
+    <div class="modal-dialog" style="width:80%">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button"  data-url="<?php echo Yii::$app->urlManager->createAbsoluteUrl(['/ajax/load-location-infor', 'company_id' => $company_id]); ?>"   class="close location_close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                <h4 class="modal-title">Add New Location</h4>
+            </div>
+            <div class="modal-body" style="width: 100%; height:450px">
+                <iframe id="iframe_location"  scrolling="no"  style="width: 100%; height: 100%;border: 0px;" src="<?php echo Yii::$app->urlManager->createAbsoluteUrl('/ajax/create-location') ?>">
+                </iframe>
+            </div>
+            <div class="modal-footer">
+                <button data-url="<?php echo Yii::$app->urlManager->createAbsoluteUrl(['/ajax/load-location-infor', 'company_id' => $company_id]); ?>" type="button" class="btn btn-default location_close" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+<div  class="modal fade form_add_new_wrap_type" tabindex="-1" role="dialog" data-backdrop="static" data-keyboard="false" >
+    <div class="modal-dialog" style="width:80%">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button"  data-url="<?php echo Yii::$app->urlManager->createAbsoluteUrl(['/ajax/load-wrap-type', 'owner_id' => $owner_id]); ?>"   class="close wrap_type_close" update-field="item-wrap-type" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                <h4 class="modal-title">Add Wrap Type</h4>
+            </div>
+            <div class="modal-body" style="width: 100%; height:450px">
+                <iframe id="iframe_wrap_type"  scrolling="no"  style="width: 100%; height: 100%;border: 0px;" src="<?php echo Yii::$app->urlManager->createAbsoluteUrl('/ajax/create-wrap-type') ?>">
+                </iframe>
+            </div>
+            <div class="modal-footer">
+                <button data-url="<?php echo Yii::$app->urlManager->createAbsoluteUrl(['/ajax/load-wrap-type', 'owner_id' => $owner_id]); ?>" type="button" class="btn btn-default wrap_type_footer_close" update-field="item-wrap-type" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div  class="modal fade form_add_new_material" tabindex="-1" role="dialog" data-backdrop="static" data-keyboard="false" >
+    <div class="modal-dialog" style="width:80%">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button"  data-url="<?php echo Yii::$app->urlManager->createAbsoluteUrl(['/ajax/load-material', 'owner_id' => $owner_id]); ?>"   class="close material_close" update-field="item-material" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                <h4 class="modal-title">Add Wrap Type</h4>
+            </div>
+            <div class="modal-body" style="width: 100%; height:450px">
+                <iframe id="iframe_material"  scrolling="no"  style="width: 100%; height: 100%;border: 0px;" src="<?php echo Yii::$app->urlManager->createAbsoluteUrl('/ajax/create-material') ?>">
+                </iframe>
+            </div>
+            <div class="modal-footer">
+                <button data-url="<?php echo Yii::$app->urlManager->createAbsoluteUrl(['/ajax/load-material', 'owner_id' => $owner_id]); ?>" type="button" class="btn btn-default material_footer_close" update-field="item-material" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    var currency_symbol = '<?php echo common\models\UserSettings::getCurrency(); ?>';
+    var default_car_id = <?= (empty($car_id)) ? "null" : $car_id ?>;
+    var state = "<?php echo $model_customer->state; ?>";
+    var _step = parseInt("<?php echo isset($model->step_1) ? $model->step_1 : 1; ?>");
+    var country = "<?php echo isset($model_customer->country) ? $model_customer->country : "United States"; ?>";
+    function calculatorSquareFootstage() {
+        var brank  = $("#car-brand").val();
+        var year = $("#car-manufacturer_year").val();
+        var model = $("#car-model").val();
+
+        if(brank != "" && year != "" && model != "") {
+            $.ajax({
+                 url: "/ajax/get-vehicle-dimensions",
+                 data: {
+                     brank: brank,
+                     year: year,
+                     model: model
+                 },
+                 type:"GET",
+                 dataType:"JSON",
+                 success: function(r){
+                    console.log(r);
+                    if (r) {
+                        var length = r.l;
+                        var width = r.w;
+                        if(length.includes("-") || width.includes("-")) {
+                             length = length.substring(length.indexOf('-') + 1);
+                             width = width.substring(width.indexOf('_') + 1);
+                             var squareFootstageNum = length * width;
+                        } else {
+                            var squareFootstageNum = r.w * r.l;
+                        }
+                        
+                        console.log(squareFootstageNum);
+                        var lwh =  r.l + ' L x ' + r.w +' W x ' +  r.h + ' H';
+                        //$('.square_footage_num').val(squareFootstageNum);
+                        $('#car-square_footage').val(squareFootstageNum);
+                        $('.lwh').text(lwh);
+                        $('.sf').text(squareFootstageNum);
+                        $('.dimension').removeClass('hide');
+                        $('.square-footage').removeClass('hide');
+                        $('#car-width').val(r.w);
+                        $('#car-height').val(r.h);
+                        $('#car-length').val(r.l);
+                    }
+                 }
+             });
+        }
+    }
+</script>
+<?php
+$tax = common\models\CompanyTaxs::find()->where(['owner_id' => $owner_id, 'status' => common\models\CompanyTaxs::STATUS_ACTIVE])->one();
+$rate_tax = 0;
+
+if (!empty($tax)) {
+    $rate_tax = $tax->tax_rate;
+}
+
+$this->registerJsFile('/public/js/quote.js', ['depends' => [\yii\web\JqueryAsset::className()]]);
+$this->registerJs('
+    var $other_id = "' . implode(',', CustomerSource::getItemOTher($owner_id)) . '".split(","); 
+    var tax_setting ="' . $rate_tax . '";
+    checkState();
+    checkCountry();
+    Quote.init();
+     $(".btn-continue").click(function(){
+        var elm  = $(this);
+        var step = parseInt(elm.attr("step"));
+        $("#quotes-step_1").val(step);
+        console.log($("#quotes-step_1").val());
+        $(".btn-create-quote").click();
+        return false;
+    });
+
+    $("#btn-submit-quote").click(function(){
+        $("#quotes-step_1").val("3");
+        $(".btn-create-quote").click();
+        return false;
+    });
+
+    $(".btn-back").click(function(){
+        var step = $(this).attr("step");
+        if (parseInt(step) == 3) {
+           $("#link-vehicle").click();
+           return false;
+        }
+
+        $("#link-customer").click();
+    });
+
+    var order_id = $("#customer-source_id").val();
+    if($other_id.indexOf(order_id) != -1 ) {
+        $("#source-other").removeClass("hidden");
+    }
+
+    $("#customer-source_id").change(function(){
+        var order_id = $(this).val() ;
+        if($other_id.indexOf(order_id) != -1){
+            $("#source-other").removeClass("hidden");
+        } else {
+             $("#source-other").addClass("hidden");
+        }
+    });
+
+    $( document ).ready(function() {   
+        setTimeout(function(){
+
+        if($("#link-quote").parent().hasClass("active")){
+            var square_footage_calculated = $("div.vehicle_manually .form-group.square-footage p.sf").text();
+            console.log(square_footage_calculated);
+            $("#tav_quote tr.quote-item .form-control.square_footage_num").val(parseInt(square_footage_calculated));
+            $("tr.quote-item .form-control.square_footage_type").val(1);
+            $("#tav_quote tr.quote-item .form-control.square_footage_num_m").val(parseInt(square_footage_calculated));
+            $("tr.quote-item .form-control.square_footage_type_m").val(1);
+            }}, 3000);
+        
+        var tav_quote      = $("#tav_quote");
+        var error_quote    = tav_quote.find(".has-error");
+        var tab_customer   = $("#tab_customer");
+        var tab_car        = $("#tav_vehicle");
+        var error_customer = tab_customer.find(".has-error");
+        var error_car      = tab_car.find(".has-error");
+        if (error_customer.length > 0 || _step == 1) {
+             $("#link-customer").click();
+             return false;
+        }
+
+        console.log("error_car: ", error_car);
+        console.log("_step: ", _step);
+
+        if (error_car.length > 0 || _step == 2) {
+             $("#link-vehicle").click();
+             return false;
+        }
+
+        if (error_quote.length > 0 || _step == 3) {
+             $("#link-quote").click();
+             return false;
+        }
+    });
+
+    function checkState() {
+        var state= $("#customer-state").attr("state");
+        if (state == "" || state == null) {
+            return;
+        }
+
+        var check = 0;
+        var l = $("#customer-state").find("option").length-1;
+        $("#customer-state").find("option").each(function(index, item){
+            if (state == $(item).val()) {
+                check = 1;
+                $("#customer-state").val(state);
+            }
+
+            if (index == l) {
+                var option = document.createElement("option");
+                option.text = state;
+                document.querySelector("#customer-state").add(option);
+                $("#wizard_step").find("#location_state").val(state);
+            }
+        });
+    }
+
+    function checkCountry() {
+        var check = 0;
+        var l = $("#customer-country").find("option").length - 1;
+        $("#customer-country").find("option").each(function(index, item){
+            if (country == $(item).val()) {
+                check = 1;
+            }
+
+            if (index == l && check == 0) {
+                country = "United States";
+            }
+        });
+    }
+
+    ', View::POS_END);
+
+if (Yii::$app->user->identity->role > common\components\Rules::PERM_ADMIN):
+    $this->registerJs("
+    $(document).ready(function(){
+            var elm  = $('#car-brand');
+            var url  = location.origin;
+            var year = $('#car-manufacturer_year').val();
+
+            if(elm.val()!= '' && year !='' ) {
+                $.ajax({
+                     url: url+'/cars/default/ajax-get-model',
+                     data: {
+                         makeId: elm.val(),
+                         year: year
+                     },
+                     type:'GET',
+                     dataType:'JSON',
+                     success: function(r){
+                        if(r==null) {
+                            return false;
+                        }
+                        if(r.status ==true) {
+                            $('#car-model').html(r.view);
+                             var model = $('#car-model_temp').val();
+                             $('#car-model').val(''+model+'');
+
+                        }
+                     }
+                 });
+            }
+        });
+
+        $(document).on('change','#car-model',function(e){calculatorSquareFootstage();});
+        $(document).on('change','#car-brand, #car-manufacturer_year',function(e){
+            e.preventDefault();
+            var elm = $('#car-brand').val();
+            var url = location.origin;
+            var year = $('#car-manufacturer_year').val();
+
+            if(elm != '' && year !='' ) {
+                $('#car-model').val('');
+                calculatorSquareFootstage();
+                $.ajax({
+                    url: url+'/cars/default/ajax-get-model',
+                    data: {
+                        makeId:elm,
+                        year: year
+                    },
+                    type:'GET',
+                    dataType:'JSON',
+                    success: function(r){
+                       if(r.status ==true) {
+                           $('#car-model').hide();
+                           $('.image-loading-model').removeClass('hide');
+                           setTimeout(function(){
+                                $('#car-model').html(r.view);
+                                $('#car-model').show();
+                                $('.image-loading-model').addClass('hide');
+                           },500);
+                       }
+                    }
+                });
+            }
+        });
+");
+
+else:
+    $this->registerJs("
+    $(document).ready(function(){
+            var elm = $('#car-brand');
+            var url = location.origin;
+            var year = $('#car-manufacturer_year').val();
+
+            if(elm.val()!='' && year != '') {
+                $.ajax({
+                        url: url+'/admin/cars/default/ajax-get-model',
+                        data: {
+                            makeId: elm.val(),
+                            year: year
+                        },
+                        type:'GET',
+                        dataType:'JSON',
+                        success: function(r){
+                           if(r==null) {
+                               return false;
+                           }
+                           if(r.status ==true) {
+                               $('#car-model').html(r.view);
+                                var model = $('#car-model_temp').val();
+                                $('#car-model').val(''+model+'');
+
+                           }
+                        }
+                    }
+                );
+            }
+
+            var sfvalue = $('.sf').text();
+        });
+
+         $(document).on('change','#car-brand, #car-manufacturer_year',function(e){
+            e.preventDefault();
+            var elm  = $('#car-brand').val();
+            var url  = location.origin;
+            var year = $('#car-manufacturer_year').val();
+            if (elm != '' && year != '') {
+                $.ajax({
+                    url: url+'/admin/cars/default/ajax-get-model',
+                    data: {
+                        makeId:elm,
+                        year: year
+                    },
+                    type:'GET',
+                    dataType:'JSON',
+                    success: function(r){
+                       if(r.status ==true) {
+                           $('#car-model').hide();
+                           $('.image-loading-model').removeClass('hide');
+                           setTimeout(function(){
+                                $('#car-model').html(r.view);
+                                $('#car-model').show();
+                                $('.image-loading-model').addClass('hide');
+                           },500);
+                       }
+                    }
+                });
+            }
+        });
+
+");
+endif;
+$googleKey = Yii::$app->params['google_key'];
+$this->registerJsFile('https://maps.googleapis.com/maps/api/js?key=' . $googleKey . '&libraries=places&callback', ['depends' => [\yii\web\JqueryAsset::className()], 'position' => \yii\web\View::POS_END]);
+$this->registerJsFile('/public/js/auto_complete_address.js', ['depends' => [\yii\web\JqueryAsset::className()], 'position' => \yii\web\View::POS_END]);
+$this->registerJsFile('/public/js/location_country.js', ['depends' => [\yii\web\JqueryAsset::className()], 'position' => \yii\web\View::POS_END]);
+?>

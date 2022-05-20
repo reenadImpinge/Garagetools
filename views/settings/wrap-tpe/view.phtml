@@ -1,0 +1,151 @@
+<?php
+
+use yii\helpers\Html;
+use yii\widgets\DetailView;
+
+$htmlUtils = new \common\components\HtmlUtils();
+
+/* @var $this yii\web\View */
+/* @var $model common\models\Customer */
+$this->title = Yii::t('app', 'View ' . $pageName);
+?>
+
+<div class="row profile">
+    <div class="col-md-12">
+        <!--BEGIN TABS-->
+        <div class="row">
+            <div class="col-md-12">
+                <div class="row">
+                    <div class="col-md-12 profile-info">
+                        <div class="row">
+                            <div class="col-md-12">
+                                <div class="portlet light bordered">
+                                    <div class="portlet-body form">
+                                        <div class="form-horizontal">
+                                            <div class="form-body">
+                                                <h3 class="form-section"><?php echo Yii::t('app', 'Service Detail'); ?></h3>
+                                                <div class="row">
+                                                    <div class="col-md-12">
+                                                        <?php if (Yii::$app->session->hasFlash('msg_success')): ?>
+                                                            <div class="alert alert-success">
+                                                                <button class="close" data-close="alert"></button>
+                                                                <?= Yii::$app->session->getFlash('msg_success') ?>
+                                                            </div>
+                                                        <?php endif; ?>
+                                                    </div>
+                                                    <div class="col-md-6">
+                                                        <div class="form-group">
+                                                            <label class="control-label col-md-4"><?php echo Yii::t('app', 'Name'); ?></label>
+                                                            <div class="col-md-8">
+                                                                <p class="form-control-static">
+                                                                    <?php echo $model->name; ?>
+                                                                </p>
+                                                            </div>
+                                                        </div>
+                                                        <div class="form-group">
+                                                            <label class="control-label col-md-4"><?php echo Yii::t('app', 'Price Type'); ?></label>
+                                                            <div class="col-md-8">
+                                                                <p class="form-control-static">
+                                                                    <?php echo $model->price_type; ?>
+                                                                </p>
+                                                            </div>
+                                                        </div>
+                                                        
+                                                        <?php if($model->price_type == 'percentage') {
+                                                            ?>
+                                                        <div class="form-group">
+                                                            <label class="control-label col-md-4"><?php echo Yii::t('app', 'Percentage of car'); ?></label>
+                                                            <div class="col-md-8">
+                                                                <p class="form-control-static">
+                                                                    <?php echo $model->percentage_of_car; ?>
+                                                                </p>
+                                                            </div>
+                                                        </div>
+
+                                                        <?php } else { ?>
+                                                        <div class="form-group">
+                                                            <label class="control-label col-md-4"><?php echo Yii::t('app', 'Fixed Price'); ?></label>
+                                                            <div class="col-md-8">
+                                                                <p class="form-control-static">
+                                                                    <?php echo $model->fixed_price; ?>
+                                                                </p>
+                                                            </div>
+                                                        </div>
+
+
+                                                        <?php } ?>
+                                                        
+
+                                                        <div class="form-group">
+                                                            <label class="control-label col-md-4"><?php echo Yii::t('app', 'Status'); ?></label>
+                                                            <div class="col-md-8">
+                                                                <p class="form-control-static">
+                                                                    <?php echo $model->getStatusText(); ?>
+                                                                </p>
+                                                            </div>
+                                                        </div>
+                                                        <div class="form-group">
+                                                            <label class="control-label col-md-4"><?php echo Yii::t('app', 'Description'); ?></label>
+                                                            <div class="col-md-8">
+                                                                <p class="form-control-static">
+                                                                    <?php echo str_replace(PHP_EOL, '<br/>', $model->description); ?>
+                                                                </p>
+                                                            </div>
+                                                        </div>
+                                                        <div class="form-group">
+                                                            <label class="control-label col-md-4"><?php echo Yii::t('app', 'created'); ?></label>
+                                                            <div class="col-md-8">
+                                                                <p class="form-control-static">
+                                                                    <?php echo Yii::$app->formatter->asDateByTimezone($model->created, $model->owner_id, 'm/d/Y'); ?>
+                                                                </p>
+                                                            </div>
+                                                        </div>
+
+                                                    </div>
+                                                </div>
+
+                                                <div class="form-actions">
+                                                    <div class="row">
+                                                        <div class="col-md-6">
+                                                            <div class="row">
+                                                                <div class="col-md-offset-4 col-md-8">
+                                                                    <?= Html::a(Yii::t('app', 'Edit'), ['update', 'id' => $model->id], ['class' => 'btn btn-primary']) ?>
+                                                                    &nbsp;or
+                                                                    <?php
+                                                                        echo Html::a(Yii::t('app', 'Back'), ['/settings/'.$pageUrl], ['class' => 'btn btn-link']);
+                                                                    ?>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+            </div>
+
+
+        </div>
+
+    </div>
+</div>
+
+<?php
+$this->registerJs("var elm = $('div.alert-success');
+    if(elm.length >0 ) {
+        setTimeout(function(){
+            elm.addClass('hide');
+        }, 6000);
+    }
+
+    $(document).on('click','button.close',function(){
+        elm.addClass('hide');
+    });");
+?>

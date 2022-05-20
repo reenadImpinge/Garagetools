@@ -1,0 +1,194 @@
+<?php
+
+use yii\helpers\Html;
+use yii\widgets\ActiveForm;
+
+/* @var $this yii\web\View */
+/* @var $model common\models\Customer */
+/* @var $form yii\widgets\ActiveForm */
+?>
+<style>
+    div#material-roll_price_unit {
+    width: 67px;
+    margin-top: 10p;
+}
+
+.form-group.field-material-roll_length, .form-group.field-material-roll_length_unit {
+    margin-bottom: 0;
+}
+.form-group.field-material-roll_length_unit > label, .form-group.field-material-roll_width > label {
+    visibility: hidden;
+    opacity: 0;
+}
+.form-group.field-material-roll_length_unit select#material-roll_length_unit {
+    width: auto;
+    display: inline-block;
+    margin-right: 5px;
+}
+span.corss-icon {
+    font-size: 18px;
+    line-height: 1.2;
+    font-weight: bold;
+    display: inline-block;
+    vertical-align: middle;
+}
+@media (max-width: 991px) {
+    .form-group.field-material-roll_length_unit > label, 
+    .form-group.field-material-roll_width > label {
+        display: none;
+    }
+}
+
+</style>
+<div class="portlet light bordered">
+    <div class="portlet-body form">
+        <div class="form-horizontal"> 
+            <?php $form = ActiveForm::begin(['options' => ['enctype' => 'multipart/form-data', 'role' => 'form']]); 
+            $listData=['in'=>'Inches', 'ft'=>'Feet'];
+            ?>
+            <div class="form-body">
+                <h3 class="form-section"><?php echo Yii::t('app', $pageName . ' Details'); ?></h3>
+                <div class="row">
+                    <div class="col-md-6">
+                        <?=
+                            $form->field($model, 'name', [
+                                'template' => "{label}<div class='col-md-7'>{input}\n{hint}\n{error}</div>",
+                                'labelOptions' => ['class' => 'control-label col-md-4 required-label'],
+                            ])->textInput(['maxlength' => true, 'placeholder' => 'Name']);
+                        ?>
+                        <?= $form->field($model, 'price_type', [
+                                'template' => "{label}<div class='col-md-5'>{input}\n{hint}\n{error}</div>",
+                                'labelOptions' => ['class' => 'control-label col-md-4']
+                            ])->radioList(['roll' => 'Cost per Roll', 'Cost per square footage' => 'Cost per square footage', 'fixed' => 'Fixed Price'])->label('Pricing Based On'); ?>  
+<!-- from here -->
+                        
+
+<!-- to here -->
+                        <?= $form->field($model, 'roll_length', [
+                                'template' => "{label}<div class='col-md-5'>{input}\n{hint}\n{error}</div>",
+                                'labelOptions' => ['class' => 'control-label col-md-4']
+                            ])->textInput(['maxlength' => true, 'placeholder' => 'Roll Length']); 
+                        ?> 
+
+                        <?= $form->field($model, 'roll_length_unit', [
+                                'template' => "{label}<div class='col-md-5'>{input}\n
+                                <span class='corss-icon'>X</span>\n{hint}\n{error}</div>",
+                                'labelOptions' => ['class' => 'control-label col-md-4 d-none']
+                            ])->dropDownList(['in' => 'Inches', 'ft' => 'Feet']); 
+                        ?> 
+
+                        <?= $form->field($model, 'roll_width', [
+                                'template' => "{label}<div class='col-md-5'>{input}\n{hint}\n{error}</div>",
+                                'labelOptions' => ['class' => 'control-label col-md-4']
+                            ])->textInput(['maxlength' => true, 'placeholder' => 'Roll Width']); 
+                        ?> 
+                        
+                        <?= $form->field($model, 'roll_width_unit', [
+                                'template' => "{label}<div class='col-md-5 d-none'>{input}\n{hint}\n{error}</div>",
+                                'labelOptions' => ['class' => 'control-label col-md-4']
+                            ])->dropDownList(['in' => 'Inches', 'ft' => 'Feet']); 
+                        ?> 
+
+                        <?=
+                            $form->field($model, 'price', [
+                                'template' => "{label}<div class='col-md-5'>{input}\n{hint}\n{error}</div>",
+                                'labelOptions' => ['class' => 'control-label col-md-4']
+                            ])->textInput(['maxlength' => true,'placeholder' => 'Cost Per Square Foot','type' => 'Number','step'=>'0.01'
+                            ]);
+                        ?>
+
+                        <?=
+                            $form->field($model, 'fixed_price', [
+                                'template' => "{label}<div class='col-md-5'>{input}\n{hint}\n{error}</div>",
+                                'labelOptions' => ['class' => 'control-label col-md-4']
+                            ])->textInput(['maxlength' => true,'placeholder' => 'Fixed Price','type' => 'Number','step'=>'0.01'
+                            ]);
+                        ?>
+                    </div>
+                    <div class="col-md-12">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <?=
+                                    $form->field($model, 'description', [
+                                        'template' => "{label}\n<div class='col-md-7'>{input}\n{hint}</div>\n{error}",
+                                        'labelOptions' => ['class' => 'control-label col-md-4']
+                                    ])->textarea(['rows' => 4
+                                    ])
+                                ?>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+                <div class="clear-fix"> </div>
+
+            </div>
+            <div class="form-actions">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="row">
+                            <div class="col-md-offset-4 col-md-8">
+                                <?= Html::submitButton($model->isNewRecord ? Yii::t('app', 'Create') : Yii::t('app', 'Update'), ['class' => $model->isNewRecord ? 'btn btn-success' : 'btn btn-primary']) ?>
+                                &nbsp;or
+                                <?php
+                                    echo Html::a(Yii::t('app', 'Back'), ['/settings/' . $pageUrl ], ['class' => 'btn btn-link']);
+                                ?>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <?php ActiveForm::end(); ?>
+        </div>
+    </div>
+</div>
+<style>
+    .pac-container:after {
+        /* Disclaimer: not needed to show 'powered by Google' if also a Google Map is shown */
+        background-image: none !important;
+        height: 0px;
+    }
+</style>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+<script type="text/javascript">
+    $(document).ready(function(){
+       
+      $("input:radio:first").prop("checked", true).trigger("click");
+        $(".form-group.field-material-fixed_price").hide();
+        $(".form-group.field-material-price").hide();
+        $("#material-price_type").on("change", function(){
+            var selected_val = $("input[name='Material[price_type]']:checked").val();
+            console.log(selected_val);
+            if(selected_val == "Cost per square footage") {
+                $(".form-group.field-material-price").show();
+                $(".form-group.field-material-fixed_price").hide();
+                $(".form-group.field-material-roll_length").hide();
+                $(".form-group.field-material-roll_length_unit").hide();
+                $(".form-group.field-material-roll_width").hide();
+                $(".form-group.field-material-roll_width_unit").hide();
+               
+            } else if(selected_val == "roll") {
+                
+               $(".form-group.field-material-price").hide();
+               $(".form-group.field-material-fixed_price").hide();
+                $(".form-group.field-material-roll_length").show();
+                $(".form-group.field-material-roll_length_unit").show();
+                $(".form-group.field-material-roll_width").show();
+                $(".form-group.field-material-roll_width_unit").show();
+            } else {
+                $(".form-group.field-material-price").hide();
+                $(".form-group.field-material-fixed_price").show();
+                $(".form-group.field-material-roll_length").hide();
+                $(".form-group.field-material-roll_length_unit").hide();
+                $(".form-group.field-material-roll_width").hide();
+                $(".form-group.field-material-roll_width_unit").hide();
+            }
+        });
+    });
+    </script>
+<?php
+  
+
+
+?>
